@@ -50,7 +50,6 @@ public class TresEnRayaUI extends javax.swing.JFrame implements OnMessageListene
 
         jToolBar1.setRollover(true);
 
-        btnServer.setBackground(new java.awt.Color(234, 234, 234));
         btnServer.setText("Iniciar Servidor");
         btnServer.setFocusable(false);
         btnServer.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
@@ -63,8 +62,6 @@ public class TresEnRayaUI extends javax.swing.JFrame implements OnMessageListene
         jToolBar1.add(btnServer);
 
         jSplitPane1.setDividerLocation(500);
-
-        jPanel1.setBackground(new java.awt.Color(153, 204, 255));
 
         jTextArea1.setColumns(20);
         jTextArea1.setRows(5);
@@ -185,7 +182,5 @@ public class TresEnRayaUI extends javax.swing.JFrame implements OnMessageListene
 
     @Override
     public void onClose() {
-        this.jTextArea1.append("IU: Se ha cerrado la conexión\n");
-        System.out.println("IU: Se ha cerrado la conexión");
     }
 }

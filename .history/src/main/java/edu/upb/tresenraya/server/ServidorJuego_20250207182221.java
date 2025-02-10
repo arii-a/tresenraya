@@ -34,14 +34,12 @@ public class ServidorJuego extends Thread implements OnMessageListener {
                 SocketClient client = new SocketClient(socket);
                 client.start();
             } catch (IOException e) {
-                e.printStackTrace();
+                
             }
 
         }
 
     }
-    
-    
 
     @Override
     public void onMessage(String message) {
@@ -50,7 +48,8 @@ public class ServidorJuego extends Thread implements OnMessageListener {
 
     @Override
     public void onClose() {
-        System.out.println("Servidor: Se ha cerrado la conexión");
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'onClose'");
     }
 
 }

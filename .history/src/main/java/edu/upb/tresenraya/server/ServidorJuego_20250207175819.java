@@ -31,26 +31,19 @@ public class ServidorJuego extends Thread implements OnMessageListener {
         while (true) {
             try {
                 Socket socket = this.serverSocket.accept();
-                SocketClient client = new SocketClient(socket);
+                SocketClient client = new SocketClient(socket, tresEnRaya.getjTextArea1());
                 client.start();
             } catch (IOException e) {
-                e.printStackTrace();
+                
             }
 
         }
 
     }
-    
-    
 
     @Override
     public void onMessage(String message) {
        System.out.println(message);
-    }
-
-    @Override
-    public void onClose() {
-        System.out.println("Servidor: Se ha cerrado la conexión");
     }
 
 }

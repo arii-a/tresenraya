@@ -22,7 +22,8 @@ public class SocketClient extends Thread {
     private final String ip;
     private final DataOutputStream dout;
     private final BufferedReader br;
-    
+    private JTextArea areaTexto;
+
 
     public SocketClient(Socket socket) throws IOException {
         this.socket = socket;

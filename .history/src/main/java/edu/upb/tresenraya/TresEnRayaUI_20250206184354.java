@@ -11,7 +11,7 @@ import javax.swing.JTextArea;
  *
  * @author rlaredo
  */
-public class TresEnRayaUI extends javax.swing.JFrame implements OnMessageListener {
+public class TresEnRayaUI extends javax.swing.JFrame {
 
     private ServidorJuego servidorJuego;
 
@@ -25,7 +25,6 @@ public class TresEnRayaUI extends javax.swing.JFrame implements OnMessageListene
      */
     public TresEnRayaUI() {
         initComponents();
-        Mediador.addListener(this);
     }
 
     /**
@@ -50,7 +49,6 @@ public class TresEnRayaUI extends javax.swing.JFrame implements OnMessageListene
 
         jToolBar1.setRollover(true);
 
-        btnServer.setBackground(new java.awt.Color(234, 234, 234));
         btnServer.setText("Iniciar Servidor");
         btnServer.setFocusable(false);
         btnServer.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
@@ -63,8 +61,6 @@ public class TresEnRayaUI extends javax.swing.JFrame implements OnMessageListene
         jToolBar1.add(btnServer);
 
         jSplitPane1.setDividerLocation(500);
-
-        jPanel1.setBackground(new java.awt.Color(153, 204, 255));
 
         jTextArea1.setColumns(20);
         jTextArea1.setRows(5);
@@ -177,15 +173,4 @@ public class TresEnRayaUI extends javax.swing.JFrame implements OnMessageListene
     private javax.swing.JTextArea jTextArea1;
     private javax.swing.JToolBar jToolBar1;
     // End of variables declaration//GEN-END:variables
-
-    @Override
-    public void onMessage(String message) {
-        this.jTextArea1.append(message);        
-    }
-
-    @Override
-    public void onClose() {
-        this.jTextArea1.append("IU: Se ha cerrado la conexión\n");
-        System.out.println("IU: Se ha cerrado la conexión");
-    }
 }

@@ -4,7 +4,6 @@
  */
 package edu.upb.tresenraya.server;
 
-import edu.upb.tresenraya.Mediador;
 import edu.upb.tresenraya.OnMessageListener;
 import edu.upb.tresenraya.TresEnRayaUI;
 import java.io.IOException;
@@ -23,7 +22,6 @@ public class ServidorJuego extends Thread implements OnMessageListener {
     public ServidorJuego(TresEnRayaUI tresEnRaya) throws IOException {
         this.serverSocket = new ServerSocket(1825);
         this.tresEnRaya = tresEnRaya;
-        Mediador.addListener(this);
     }
 
     @Override
@@ -31,26 +29,20 @@ public class ServidorJuego extends Thread implements OnMessageListener {
         while (true) {
             try {
                 Socket socket = this.serverSocket.accept();
-                SocketClient client = new SocketClient(socket);
+                SocketClient client = new SocketClient(socket, tresEnRaya.getjTextArea1());
                 client.start();
             } catch (IOException e) {
-                e.printStackTrace();
+                
             }
 
         }
 
     }
-    
-    
 
     @Override
     public void onMessage(String message) {
-       System.out.println(message);
-    }
-
-    @Override
-    public void onClose() {
-        System.out.println("Servidor: Se ha cerrado la conexión");
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'onMessage'");
     }
 
 }

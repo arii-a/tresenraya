@@ -34,14 +34,12 @@ public class ServidorJuego extends Thread implements OnMessageListener {
                 SocketClient client = new SocketClient(socket);
                 client.start();
             } catch (IOException e) {
-                e.printStackTrace();
+                
             }
 
         }
 
     }
-    
-    
 
     @Override
     public void onMessage(String message) {

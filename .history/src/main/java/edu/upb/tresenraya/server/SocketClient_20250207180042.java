@@ -22,7 +22,8 @@ public class SocketClient extends Thread {
     private final String ip;
     private final DataOutputStream dout;
     private final BufferedReader br;
-    
+    private JTextArea areaTexto;
+
 
     public SocketClient(Socket socket) throws IOException {
         this.socket = socket;
@@ -36,12 +37,7 @@ public class SocketClient extends Thread {
         try {
             String message;
             while ((message = br.readLine()) != null) {
-                if(message.equals("cerrar")) {
-                    Mediador.onClose();
-                    break;
-                } else {
-                    Mediador.sendMessage(message+"\n");
-                }
+                Mediador.sendMessage(message+"\n");
             }
         } catch (IOException e) {
             e.printStackTrace();

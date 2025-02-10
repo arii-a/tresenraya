@@ -12,8 +12,6 @@ import java.io.InputStreamReader;
 import java.net.Socket;
 import javax.swing.JTextArea;
 
-import edu.upb.tresenraya.Mediador;
-
 /**
  * @author rlaredo
  */
@@ -22,13 +20,15 @@ public class SocketClient extends Thread {
     private final String ip;
     private final DataOutputStream dout;
     private final BufferedReader br;
-    
+    private JTextArea areaTexto;
 
-    public SocketClient(Socket socket) throws IOException {
+
+    public SocketClient(Socket socket, JTextArea texto) throws IOException {
         this.socket = socket;
         this.ip = socket.getInetAddress().getHostAddress();
         dout = new DataOutputStream(socket.getOutputStream());
         br = new BufferedReader(new InputStreamReader(this.socket.getInputStream()));
+        this.areaTexto = texto;
     }
 
     @Override
@@ -36,11 +36,8 @@ public class SocketClient extends Thread {
         try {
             String message;
             while ((message = br.readLine()) != null) {
-                if(message.equals("cerrar")) {
-                    Mediador.onClose();
-                    break;
-                } else {
-                    Mediador.sendMessage(message+"\n");
+                if(areaTexto != null) {
+                    areaTexto.append(message+"\n");
                 }
             }
         } catch (IOException e) {
@@ -58,7 +55,7 @@ public class SocketClient extends Thread {
     }
  
     public static void main(String[] args) throws IOException {
-        SocketClient socketClient = new SocketClient(new Socket("localhost", 1825));
+        SocketClient socketClient = new SocketClient(new Socket("localhost", 1825), null);
         socketClient.start();
         BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
         
