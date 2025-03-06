@@ -4,11 +4,9 @@
  */
 package edu.upb.tresenraya.server;
 
+import mediador.Mediador;
+import mediador.OnMessageListener;
 import edu.upb.tresenraya.TresEnRayaUI;
-import edu.upb.tresenraya.comandos.Comando;
-import edu.upb.tresenraya.mediador.Mediador;
-import edu.upb.tresenraya.mediador.OnMessageListener;
-
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -54,16 +52,12 @@ public class ServidorJuego extends Thread implements OnMessageListener {
 
     @Override
     public void onMessageCliente(String message) {
-
+        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
     }
 
     @Override
-    public void onChangeColour(String colour) {
-        // TODO Auto-generated method stub
-    }
-
-    @Override
-    public void onMessage(Comando c) {
+    public void onColourChange(String colour) {
+        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
     }
 
 }

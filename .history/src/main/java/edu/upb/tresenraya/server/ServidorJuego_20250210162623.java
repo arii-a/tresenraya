@@ -4,11 +4,9 @@
  */
 package edu.upb.tresenraya.server;
 
+import edu.upb.tresenraya.Mediador;
+import edu.upb.tresenraya.OnMessageListener;
 import edu.upb.tresenraya.TresEnRayaUI;
-import edu.upb.tresenraya.comandos.Comando;
-import edu.upb.tresenraya.mediador.Mediador;
-import edu.upb.tresenraya.mediador.OnMessageListener;
-
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -38,9 +36,10 @@ public class ServidorJuego extends Thread implements OnMessageListener {
             } catch (IOException e) {
                 e.printStackTrace();
             }
+
         }
+
     }
-    
 
     @Override
     public void onMessage(String message) {
@@ -50,20 +49,6 @@ public class ServidorJuego extends Thread implements OnMessageListener {
     @Override
     public void onClose() {
         System.out.println("Servidor: Se ha cerrado la conexión");
-    }
-
-    @Override
-    public void onMessageCliente(String message) {
-
-    }
-
-    @Override
-    public void onChangeColour(String colour) {
-        // TODO Auto-generated method stub
-    }
-
-    @Override
-    public void onMessage(Comando c) {
     }
 
 }

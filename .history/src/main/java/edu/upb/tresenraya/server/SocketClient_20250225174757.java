@@ -6,11 +6,8 @@ package edu.upb.tresenraya.server;
 
 
 import edu.upb.tresenraya.comandos.AceptacionConexion;
-import edu.upb.tresenraya.comandos.AceptacionJuego;
 import edu.upb.tresenraya.comandos.Comando;
 import edu.upb.tresenraya.comandos.IniciarJuego;
-import edu.upb.tresenraya.comandos.Marcar;
-import edu.upb.tresenraya.comandos.NuevaPartida;
 import edu.upb.tresenraya.comandos.RechazoConexion;
 import edu.upb.tresenraya.comandos.RechazoJuego;
 import edu.upb.tresenraya.comandos.SolicitudConexion;
@@ -25,13 +22,10 @@ import edu.upb.tresenraya.mediador.MediadorCliente;
 import edu.upb.tresenraya.mediador.OnMessageListener;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import lombok.Getter;
 
 /**
  * @author rlaredo
  */
-
-@Getter
 public class SocketClient extends Thread implements OnMessageListener {
     private final Socket socket;
     private final String ip;
@@ -65,78 +59,47 @@ public class SocketClient extends Thread implements OnMessageListener {
                     Comando c = new SolicitudConexion();
                     try {
                         c.parsear(message);
-                        ((SolicitudConexion) c).setIp(this.ip);
-                        Mediador.sendMessage(c);
-                    } catch (Exception ex) {
-                        Logger.getLogger(SocketClient.class.getName()).log(Level.SEVERE, null, ex);
-                    }
-                }
-                if (message.contains("0002")) {
-                    Comando c = new RechazoConexion();
-                    try {
-                        c.parsear(message);
-                        Mediador.sendMessage(c);
                     } catch (Exception ex) {
                         Logger.getLogger(SocketClient.class.getName()).log(Level.SEVERE, null, ex);
                     }
                     Mediador.sendMessage(c);
-                }
-                if (message.contains("0003")) {
+                } if (message.contains("0002")) {
+                    Comando c = new RechazoConexion();
+                    try {
+                        c.parsear(message);
+                    } catch (Exception ex) {
+                        Logger.getLogger(SocketClient.class.getName()).log(Level.SEVERE, null, ex);
+                    }
+                    Mediador.sendMessage(c);
+                } if (message.contains("0003")) {
                     Comando c = new AceptacionConexion();
                     try {
                         c.parsear(message);
-                        Mediador.sendMessage(c);
                     } catch (Exception ex) {
                         Logger.getLogger(SocketClient.class.getName()).log(Level.SEVERE, null, ex);
                     }
-                }
-                if (message.contains("0004")) {
+                    Mediador.sendMessage(c);
+                } if (message.contains("0004")) {
                     Comando c = new IniciarJuego();
                     try {
                         c.parsear(message);
-                        Mediador.sendMessage(c);
                     } catch (Exception ex) {
                         Logger.getLogger(SocketClient.class.getName()).log(Level.SEVERE, null, ex);
                     }
-                }
-                if (message.contains("0005")) {
+                    Mediador.sendMessage(c);
+                } if (message.contains("0005")) {
                     Comando c = new RechazoJuego();
                     try {
                         c.parsear(message);
-                        Mediador.sendMessage(c);
                     } catch (Exception ex) {
                         Logger.getLogger(SocketClient.class.getName()).log(Level.SEVERE, null, ex);
                     }
-                }
-                if (message.contains("0006")) {
-                    Comando c = new AceptacionJuego();
-                    try {
-                        c.parsear(message);
-                        Mediador.sendMessage(c);
-                    } catch (Exception ex) {
-                        Logger.getLogger(SocketClient.class.getName()).log(Level.SEVERE, null, ex);
-                    }
-                }
-                if (message.contains("0007")) {
-                    Comando c = new NuevaPartida();
-                    try {
-                        c.parsear(message);
-                        Mediador.sendMessage(c);
-                    } catch (Exception ex) {
-                        Logger.getLogger(SocketClient.class.getName()).log(Level.SEVERE, null, ex);
-                    }
-                }
-                if (message.contains("0008")) {
-                    Comando c = new Marcar();
-                    try {
-                        c.parsear(message);
-                        Mediador.sendMessage(c);
-                    } catch (Exception ex) {
-                        Logger.getLogger(SocketClient.class.getName()).log(Level.SEVERE, null, ex);
-                    }
+                    Mediador.sendMessage(c);
                 } else {
-                    Mediador.sendMessage(message + "\n");
+                    Mediador.sendMessage("Mensaje: " + message + "\n");
                 }
+                
+                System.out.println("Mensaje: " + message);
             }
         } catch (IOException e) {
             e.printStackTrace();

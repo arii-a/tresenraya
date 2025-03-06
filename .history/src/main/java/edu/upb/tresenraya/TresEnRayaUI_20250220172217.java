@@ -5,13 +5,6 @@
 package edu.upb.tresenraya;
 
 import edu.upb.tresenraya.backend.TresEnRayaJuego;
-import edu.upb.tresenraya.comandos.AceptacionConexion;
-import edu.upb.tresenraya.comandos.Comando;
-import edu.upb.tresenraya.comandos.Contactos;
-import edu.upb.tresenraya.comandos.IniciarJuego;
-import edu.upb.tresenraya.comandos.Marcar;
-import edu.upb.tresenraya.comandos.RechazoConexion;
-import edu.upb.tresenraya.comandos.SolicitudConexion;
 import edu.upb.tresenraya.db.ConexionDB;
 import edu.upb.tresenraya.mediador.Mediador;
 import edu.upb.tresenraya.mediador.MediadorCliente;
@@ -19,42 +12,25 @@ import edu.upb.tresenraya.mediador.MediadorJuego;
 import edu.upb.tresenraya.mediador.OnJuegoListener;
 import edu.upb.tresenraya.mediador.OnMessageListener;
 import edu.upb.tresenraya.server.ServidorJuego;
-import edu.upb.tresenraya.server.SocketClient;
-import java.awt.BasicStroke;
 import javax.swing.JTextArea;
 
+import java.awt.Color;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import javax.swing.JLabel;
-import java.awt.Color;
-import java.awt.Component;
-import java.awt.Font;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
-import java.io.IOException;
-import java.net.Socket;
-import java.util.Map;
-import javax.swing.DefaultListModel;
-import javax.swing.JOptionPane;
-import javax.swing.SwingConstants;
-import javax.swing.SwingUtilities;
 
 /**
  *
  * @author rlaredo
  */
-public class TresEnRayaUI extends javax.swing.JFrame implements OnMessageListener, ActionListener, MouseListener, OnJuegoListener {
+public class TresEnRayaUI extends javax.swing.JFrame implements OnMessageListener, ActionListener, MouseListener {
 
     private ServidorJuego servidorJuego;
     private String jugadorActual = "";
     private String posActual = "";
-    String ip = "";
-    SocketClient socketClientNew;
-    DefaultListModel<String> modeloLista = new DefaultListModel<>();
-    private boolean juegoIniciado = false;
 
     public JTextArea getjTextArea1() {
         return jTextArea1;
@@ -67,28 +43,11 @@ public class TresEnRayaUI extends javax.swing.JFrame implements OnMessageListene
     public TresEnRayaUI() {
         initComponents();
         Mediador.addListener(this);
-        MediadorCliente.addListenerCliente(this);
-        MediadorJuego.addListenerJuego(this);
-        modeloLista = Contactos.getInstance().getModeloLista();
-        if (modeloLista == null) {
-            modeloLista = new DefaultListModel<>();
-        }
-
-        Map<String, SocketClient> contatos = Contactos.getInstance().getContatos();
-
-        if (contatos != null && !contatos.isEmpty()) {
-            for (String key : contatos.keySet()) {
-                modeloLista.addElement(key); 
-            }
-        } else {
-            modeloLista.addElement("No clients connected"); 
-        }
-        
-        jList1.setModel(modeloLista);
-        
         //btnSendMessage.addActionListener(this);
         ConexionDB.onstance().getConection();
-                
+        TresEnRayaJuego ter = new TresEnRayaJuego();
+        ter.setUltimaJugada("");
+        
         GridLayout gridLayout = new GridLayout(3, 3);
         jPanel3.setLayout(gridLayout);
         
@@ -105,7 +64,6 @@ public class TresEnRayaUI extends javax.swing.JFrame implements OnMessageListene
         }
         
     }
-    
 
     /**
      * This method is called from within the constructor to initialize the form.
@@ -119,12 +77,6 @@ public class TresEnRayaUI extends javax.swing.JFrame implements OnMessageListene
         jToolBar1 = new javax.swing.JToolBar();
         btnServer = new javax.swing.JButton();
         jButton1 = new javax.swing.JButton();
-        jButton2 = new javax.swing.JButton();
-        jButton5 = new javax.swing.JButton();
-        ipSender = new javax.swing.JTextField(20);
-        jButton3 = new javax.swing.JButton();
-        sendIp = new javax.swing.JButton();
-        jButton4 = new javax.swing.JButton();
         jSplitPane1 = new javax.swing.JSplitPane();
         jPanel1 = new javax.swing.JPanel();
         jSplitPane2 = new javax.swing.JSplitPane();
@@ -133,6 +85,8 @@ public class TresEnRayaUI extends javax.swing.JFrame implements OnMessageListene
         jTextArea1 = new javax.swing.JTextArea();
         btnSendMessage = new javax.swing.JButton();
         textField1 = new java.awt.TextField();
+        buttonX = new javax.swing.JButton();
+        buttonO = new javax.swing.JButton();
         jPanel3 = new javax.swing.JPanel();
         jScrollPane1 = new javax.swing.JScrollPane();
         jList1 = new javax.swing.JList<>();
@@ -143,7 +97,6 @@ public class TresEnRayaUI extends javax.swing.JFrame implements OnMessageListene
 
         btnServer.setBackground(new java.awt.Color(234, 234, 234));
         btnServer.setText("Iniciar Servidor");
-        btnServer.setBorder(javax.swing.BorderFactory.createEtchedBorder());
         btnServer.setFocusable(false);
         btnServer.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
         btnServer.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
@@ -154,59 +107,17 @@ public class TresEnRayaUI extends javax.swing.JFrame implements OnMessageListene
         });
         jToolBar1.add(btnServer);
 
+        jButton1.setBackground(new java.awt.Color(234, 234, 234));
+        jButton1.setText("Premium");
         jButton1.setFocusable(false);
         jButton1.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
         jButton1.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
+        jButton1.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton1ActionPerformed(evt);
+            }
+        });
         jToolBar1.add(jButton1);
-
-        jButton2.setBackground(new java.awt.Color(234, 234, 234));
-        jButton2.setText("Nueva partida");
-        jButton2.setBorder(javax.swing.BorderFactory.createEtchedBorder());
-        jButton2.setFocusable(false);
-        jButton2.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
-        jButton2.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
-        jButton2.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jButton2ActionPerformed(evt);
-            }
-        });
-        jToolBar1.add(jButton2);
-
-        jButton5.setFocusable(false);
-        jButton5.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
-        jButton5.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
-        jToolBar1.add(jButton5);
-
-        ipSender.setBackground(new java.awt.Color(234, 234, 234));
-        ipSender.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                ipSenderActionPerformed(evt);
-            }
-        });
-        jToolBar1.add(ipSender);
-
-        jButton3.setFocusable(false);
-        jButton3.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
-        jButton3.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
-        jToolBar1.add(jButton3);
-
-        sendIp.setBackground(new java.awt.Color(234, 234, 234));
-        sendIp.setText("Send to play");
-        sendIp.setBorder(javax.swing.BorderFactory.createEtchedBorder());
-        sendIp.setFocusable(false);
-        sendIp.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
-        sendIp.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
-        sendIp.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                sendIpActionPerformed(evt);
-            }
-        });
-        jToolBar1.add(sendIp);
-
-        jButton4.setFocusable(false);
-        jButton4.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
-        jButton4.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
-        jToolBar1.add(jButton4);
 
         jSplitPane1.setDividerLocation(500);
 
@@ -236,6 +147,22 @@ public class TresEnRayaUI extends javax.swing.JFrame implements OnMessageListene
             }
         });
 
+        buttonX.setText("X");
+        buttonX.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        buttonX.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
+        buttonX.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                buttonXActionPerformed(evt);
+            }
+        });
+
+        buttonO.setText("O");
+        buttonO.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                buttonOActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
         jPanel2.setLayout(jPanel2Layout);
         jPanel2Layout.setHorizontalGroup(
@@ -248,12 +175,20 @@ public class TresEnRayaUI extends javax.swing.JFrame implements OnMessageListene
                         .addComponent(textField1, javax.swing.GroupLayout.PREFERRED_SIZE, 248, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(btnSendMessage, javax.swing.GroupLayout.PREFERRED_SIZE, 61, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                .addContainerGap(171, Short.MAX_VALUE))
+                .addContainerGap(444, Short.MAX_VALUE))
+            .addGroup(jPanel2Layout.createSequentialGroup()
+                .addComponent(buttonX)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(buttonO)
+                .addGap(0, 0, Short.MAX_VALUE))
         );
         jPanel2Layout.setVerticalGroup(
             jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel2Layout.createSequentialGroup()
-                .addContainerGap(291, Short.MAX_VALUE)
+                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(buttonX, javax.swing.GroupLayout.PREFERRED_SIZE, 21, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(buttonO, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 213, Short.MAX_VALUE)
                 .addComponent(chatPrueba, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -267,11 +202,11 @@ public class TresEnRayaUI extends javax.swing.JFrame implements OnMessageListene
         jPanel3.setLayout(jPanel3Layout);
         jPanel3Layout.setHorizontalGroup(
             jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 335, Short.MAX_VALUE)
+            .addGap(0, 773, Short.MAX_VALUE)
         );
         jPanel3Layout.setVerticalGroup(
             jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 0, Short.MAX_VALUE)
+            .addGap(0, 100, Short.MAX_VALUE)
         );
 
         jSplitPane2.setLeftComponent(jPanel3);
@@ -280,7 +215,7 @@ public class TresEnRayaUI extends javax.swing.JFrame implements OnMessageListene
         jPanel1.setLayout(jPanel1Layout);
         jPanel1Layout.setHorizontalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jSplitPane2)
+            .addComponent(jSplitPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 773, Short.MAX_VALUE)
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -290,7 +225,7 @@ public class TresEnRayaUI extends javax.swing.JFrame implements OnMessageListene
         jSplitPane1.setLeftComponent(jPanel1);
 
         jList1.setModel(new javax.swing.AbstractListModel<String>() {
-            String[] strings = { "Item 1", "Item 2", "Item 3", "Item 4", "Item 5", " " };
+            String[] strings = { "Item 1", "Item 2", "Item 3", "Item 4", "Item 5" };
             public int getSize() { return strings.length; }
             public String getElementAt(int i) { return strings[i]; }
         });
@@ -303,12 +238,12 @@ public class TresEnRayaUI extends javax.swing.JFrame implements OnMessageListene
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addComponent(jToolBar1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-            .addComponent(jSplitPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 651, Short.MAX_VALUE)
+            .addComponent(jSplitPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 803, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addComponent(jToolBar1, javax.swing.GroupLayout.PREFERRED_SIZE, 40, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(jToolBar1, javax.swing.GroupLayout.PREFERRED_SIZE, 25, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jSplitPane1))
         );
@@ -338,10 +273,11 @@ public class TresEnRayaUI extends javax.swing.JFrame implements OnMessageListene
             if (message.split(" ")[0].equals("colour") || message.split(" ")[0].equals("color")) {
                 sendColour(message.split(" ")[1]);
                 jTextArea1.append("Servidor: "+message+"\n");
-                MediadorCliente.sendMessageCliente(message+"\n");
+                MediadorCliente.sendMessageCliente("Servidor: "+message+"\n");
                 textField1.setText("");
             } else {
-                MediadorCliente.sendMessageCliente(message+"\n");
+                jTextArea1.append("Servidor: "+message+"\n");
+                MediadorCliente.sendMessageCliente("Servidor: "+message+"\n");
                 textField1.setText("");
             }
         }
@@ -351,19 +287,19 @@ public class TresEnRayaUI extends javax.swing.JFrame implements OnMessageListene
         // TODO add your handling code here:
     }//GEN-LAST:event_textField1ActionPerformed
 
-    private void ipSenderActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_ipSenderActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_ipSenderActionPerformed
+    private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
+        new PagoPremium();
+    }//GEN-LAST:event_jButton1ActionPerformed
 
-    private void sendIpActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_sendIpActionPerformed
-        String ip = ipSender.getText();
-        System.out.println("IP: " + ip);
-        onSend001(ip);
-    }//GEN-LAST:event_sendIpActionPerformed
+    private void buttonXActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buttonXActionPerformed
+        jugadorActual = "X";
+        System.out.println(this.jugadorActual);
+    }//GEN-LAST:event_buttonXActionPerformed
 
-    private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
-        System.out.println("0007");
-    }//GEN-LAST:event_jButton2ActionPerformed
+    private void buttonOActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buttonOActionPerformed
+        jugadorActual = "O";
+        System.out.println(this.jugadorActual);
+    }//GEN-LAST:event_buttonOActionPerformed
 
     
     /**
@@ -404,13 +340,10 @@ public class TresEnRayaUI extends javax.swing.JFrame implements OnMessageListene
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton btnSendMessage;
     private javax.swing.JButton btnServer;
+    private javax.swing.JButton buttonO;
+    private javax.swing.JButton buttonX;
     private javax.swing.JScrollPane chatPrueba;
-    private javax.swing.JTextField ipSender;
     private javax.swing.JButton jButton1;
-    private javax.swing.JButton jButton2;
-    private javax.swing.JButton jButton3;
-    private javax.swing.JButton jButton4;
-    private javax.swing.JButton jButton5;
     private javax.swing.JList<String> jList1;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel2;
@@ -420,15 +353,12 @@ public class TresEnRayaUI extends javax.swing.JFrame implements OnMessageListene
     private javax.swing.JSplitPane jSplitPane2;
     private javax.swing.JTextArea jTextArea1;
     private javax.swing.JToolBar jToolBar1;
-    private javax.swing.JButton sendIp;
     private java.awt.TextField textField1;
     // End of variables declaration//GEN-END:variables
 
-    
     @Override
     public void onMessage(String message) {
-        this.jTextArea1.append(message);   
-      
+        this.jTextArea1.append(message);        
     }
 
     @Override
@@ -477,9 +407,6 @@ public class TresEnRayaUI extends javax.swing.JFrame implements OnMessageListene
     @Override
     public void mouseClicked(MouseEvent e) {
         JLabel source =(JLabel)e.getSource();
-        if (!source.getText().isEmpty()) return;
-        source.setText(jugadorActual);
-        
         String pos = "" + source.getName();
         this.posActual = pos;
         System.out.println(this.posActual);    
@@ -501,187 +428,4 @@ public class TresEnRayaUI extends javax.swing.JFrame implements OnMessageListene
     @Override
     public void mouseExited(MouseEvent e) {
     }
-
-    public void onSend001(String ip) {
-        jTextArea1.append("Solicitud enviada a " + ip + "\n");
-        String msg = "0001|Ariana";
-        
-        
-        try {
-                Socket socket = new Socket(ip, 1825);
-                socketClientNew = new SocketClient(socket);
-                socketClientNew.start();        
-                
-                Contactos.getInstance().onNewClient(socketClientNew);
-                System.out.println(socketClientNew.getIp());
-                Contactos.getInstance().send(socketClientNew.getIp(), msg + System.lineSeparator());
-            
-                SwingUtilities.invokeLater(() -> {
-                    JOptionPane.showMessageDialog(null, "Mensaje enviado a IP: " + ip,
-                            "OK", JOptionPane.INFORMATION_MESSAGE);
-                });                
-                             
-            } catch (IOException e) {
-                System.err.println("I/O error: " + e.getMessage());
-                JOptionPane.showMessageDialog(null, "Error al conectar con el cliente", "Error", JOptionPane.ERROR_MESSAGE);
-                e.printStackTrace();
-            }
-    }
-
-    @Override
-    public void onSendDatos(String datos) {
-        String[] partes = datos.split(" ");
-        String pos = partes[0]; 
-        String simbolo = partes[1]; 
-
-        int posX = Character.getNumericValue(pos.charAt(0)); 
-        int posY = Character.getNumericValue(pos.charAt(1)); 
-
-        String nombreCelda = posX + "" + posY;
-        for (Component comp : jPanel3.getComponents()) { // jPanel3 contiene los JLabels
-        if (comp instanceof JLabel) {
-            JLabel label = (JLabel) comp;
-            if (nombreCelda.equals(label.getName())) {
-                if (!label.getText().isEmpty()) {
-                    System.err.println("Error: celda ya ocupada -> " + nombreCelda);
-                    return;
-                }
-                label.setText(simbolo);
-                label.setFont(new Font("Arial", Font.BOLD, 60)); 
-                label.setHorizontalAlignment(SwingConstants.CENTER); 
-                label.setVerticalAlignment(SwingConstants.CENTER);
-                System.out.println("Movimiento realizado en " + nombreCelda + " con " + simbolo);
-                return;
-            }
-        }
-    }
-
-        System.err.println("Error: No se encontró la celda con nombre -> " + nombreCelda);
-    }
-
-    @Override
-    public void onGanador(String ganador) {
-        JOptionPane.showMessageDialog(null, "El jugador " + ganador + " ha ganador :D",
-                "Partida finalizada", JOptionPane.INFORMATION_MESSAGE);
-        
-            return;
-    }
-
-    @Override
-    public void onEmpate() {
-        JOptionPane.showMessageDialog(null, "Ha habido un empate",
-                "Partida finalizada", JOptionPane.INFORMATION_MESSAGE);
-            
-        return;
-    }
-
-    @Override
-    public void onInvalidMove() {
-            JOptionPane.showMessageDialog(null, "Este jugador ya jugó su turno!!.",
-                "Movimiento no válido", JOptionPane.WARNING_MESSAGE);
-       
-    }
-    
-    public void vaciarCuadricula() {
-        for (Component c : jPanel3.getComponents()) {
-            if (c instanceof JLabel) {
-                ((JLabel) c).setText("");
-            }
-        }
-        jPanel3.revalidate();
-        jPanel3.repaint(); 
-        System.out.println("Cuadrícula vaciada correctamente.");
-    }
-
-    @Override
-    public void onMessage(Comando c) {
-        switch (c.getCodigoComando()) {
-            case "0001":
-                SolicitudConexion sol = (SolicitudConexion) c;
-                String nombre = sol.getNombre();
-                AceptacionConexion acep = new AceptacionConexion(nombre);
-                RechazoConexion rec = new RechazoConexion();
-                this.ip = sol.getIp();
-
-                int n = JOptionPane.showConfirmDialog(this, nombre + " te ha solicitado",
-                        "Solicitud de conexion",
-                        JOptionPane.YES_NO_OPTION);
-
-                if (n == JOptionPane.YES_OPTION) {
-                    System.out.println(sol.getIp() + " " + acep.getComando());
-                    Contactos.getInstance().send(sol.getIp(), acep.getComando() + System.lineSeparator());
-                                        
-                    if(modeloLista != null) {
-                        SwingUtilities.invokeLater(() -> {
-                            if (modeloLista.size() == 1 && modeloLista.get(0).equals("No clients connected")) {
-                                modeloLista.remove(0);
-                            }
-                            modeloLista.addElement(nombre + " - " + sol.getIp());
-                        });
-                    }
-                } else if (n == JOptionPane.NO_OPTION) {
-                    Contactos.getInstance().send(sol.getIp(), rec.getComando() + System.lineSeparator());
-                }
-                break;
-            case "0002":
-                System.out.println("Solicitud rechazada");
-                JOptionPane.showMessageDialog(null, "Solicitud rechazada.", "NO", JOptionPane.INFORMATION_MESSAGE);
-                break;
-            case "0003":
-                AceptacionConexion ace = (AceptacionConexion) c;
-                String name = ace.getNombre();
-                System.out.println("Solicitud aceptada por " + name);
-                JOptionPane.showMessageDialog(null, name + " ha aceptado la solicitud.", "Solicitud Aceptada", JOptionPane.INFORMATION_MESSAGE);
-                SwingUtilities.invokeLater(() -> {
-                    if (modeloLista.size() == 1 && modeloLista.get(0).equals("No clients connected")) {
-                        modeloLista.remove(0);
-                    }
-                    Contactos.getInstance().onNewClient(socketClientNew);
-                    modeloLista.addElement(name + " - " + this.ip);
-                });
-                break;
-            case "0004":
-                IniciarJuego inc = (IniciarJuego) c;
-                String simb = inc.getSimboloJuego();
-                int respuesta = JOptionPane.showConfirmDialog(null,
-                        "Jugador solicita partida con símbolo " + simb + ". ¿Aceptar?",
-                        "Iniciar Partida",
-                        JOptionPane.YES_NO_OPTION);
-                
-                if (respuesta == JOptionPane.YES_OPTION) {
-                    juegoIniciado = true; 
-                    Contactos.getInstance().send(ip, "0006" + System.lineSeparator()); 
-                } else {
-                    Contactos.getInstance().send(ip, "0005" + System.lineSeparator()); 
-                }
-                break;
-            case "0005":
-                JOptionPane.showMessageDialog(null, "Juegador rechazó partida", "Partida Rechazada", JOptionPane.INFORMATION_MESSAGE);
-                break;
-            case "0006":
-                juegoIniciado = true;
-                JOptionPane.showMessageDialog(null, "Juegador aceptó la partida", "Partida Aceptada", JOptionPane.INFORMATION_MESSAGE);
-                break;
-            case "0007":
-                vaciarCuadricula();
-                JOptionPane.showMessageDialog(null, "Juegador inició nueva partida", "Partida Nueva", JOptionPane.INFORMATION_MESSAGE);
-                break;
-            case "0008":
-                if (!juegoIniciado) { 
-                    System.err.println("⚠ No puedes jugar sin haber aceptado una partida.");
-                    JOptionPane.showMessageDialog(null, "Debes aceptar una partida antes de jugar.", "Error", JOptionPane.WARNING_MESSAGE);
-                    return; 
-                }
-
-                Marcar marca = (Marcar) c;
-                String simbol = marca.getSimboloJuego();
-                int posX = marca.getPosX();
-                int posY = marca.getPosY();
-                MediadorJuego.sendMessageJuego(posX + "" + posY + " " + simbol);
-                System.out.println(simbol + " en casilla " + posX + "" + posY);
-            }
-    }
-
-    
-
 }
