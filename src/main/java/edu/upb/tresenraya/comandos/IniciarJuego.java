@@ -21,7 +21,9 @@ public class IniciarJuego extends Comando {
         this.simboloJuego = simboloJuego;
     }
     
-    public IniciarJuego(){}
+    public IniciarJuego(){
+        super.setCodigoComando("0004");
+    }
     
     @Override
     public void parsear(String message) throws Exception {

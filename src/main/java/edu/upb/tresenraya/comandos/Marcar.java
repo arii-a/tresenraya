@@ -24,7 +24,9 @@ public class Marcar extends Comando {
         this.posY = posY;
     }
     
-    public Marcar(){}
+    public Marcar(){
+        super.setCodigoComando("0008");
+    }
     
     @Override
     public void parsear(String message) throws Exception {
