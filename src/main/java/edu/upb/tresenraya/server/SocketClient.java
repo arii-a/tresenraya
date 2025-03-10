@@ -52,6 +52,7 @@ public class SocketClient extends Thread implements OnMessageListener {
         try {
             String message;
             while ((message = br.readLine()) != null) {
+                System.out.println(message);
                 if (message.equals("cerrar")) {
                     Mediador.onClose();
                     break;
@@ -179,6 +180,7 @@ public class SocketClient extends Thread implements OnMessageListener {
     @Override
     public void onMessageCliente(String message) {
         try {
+            System.out.println("Mensaje recibido");
             dout.write((message + System.lineSeparator()).getBytes());
             dout.flush();
         } catch (IOException e) {

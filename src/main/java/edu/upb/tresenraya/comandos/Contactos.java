@@ -22,6 +22,7 @@ public class Contactos implements SocketListener {
     
     private final Map<String, SocketClient> contatos = new HashMap<>();
     private static Contactos instance = new Contactos();
+    private boolean stateConnect = false;
     private DefaultListModel<String> modeloLista;
     
     private Contactos() {

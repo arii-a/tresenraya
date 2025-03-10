@@ -4,9 +4,9 @@
  */
 package edu.upb.tresenraya;
 
-import edu.upb.tresenraya.backend.TresEnRayaJuego;
 import edu.upb.tresenraya.comandos.AceptacionConexion;
 import edu.upb.tresenraya.comandos.Comando;
+import edu.upb.tresenraya.comandos.Contacto;
 import edu.upb.tresenraya.comandos.Contactos;
 import edu.upb.tresenraya.comandos.IniciarJuego;
 import edu.upb.tresenraya.comandos.Marcar;
@@ -20,7 +20,6 @@ import edu.upb.tresenraya.mediador.OnJuegoListener;
 import edu.upb.tresenraya.mediador.OnMessageListener;
 import edu.upb.tresenraya.server.ServidorJuego;
 import edu.upb.tresenraya.server.SocketClient;
-import java.awt.BasicStroke;
 import javax.swing.JTextArea;
 
 import java.awt.GridLayout;
@@ -32,8 +31,7 @@ import javax.swing.JLabel;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Font;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
+import java.awt.event.MouseAdapter;
 import java.io.IOException;
 import java.net.Socket;
 import java.util.Map;
@@ -53,7 +51,7 @@ public class TresEnRayaUI extends javax.swing.JFrame implements OnMessageListene
     private String posActual = "";
     String ip = "";
     SocketClient socketClientNew;
-    DefaultListModel<String> modeloLista = new DefaultListModel<>();
+    DefaultListModel<Contacto> modeloLista = new DefaultListModel<>();
     private boolean juegoIniciado = false;
 
     public JTextArea getjTextArea1() {
@@ -69,7 +67,20 @@ public class TresEnRayaUI extends javax.swing.JFrame implements OnMessageListene
         Mediador.addListener(this);
         MediadorCliente.addListenerCliente(this);
         MediadorJuego.addListenerJuego(this);
-        modeloLista = Contactos.getInstance().getModeloLista();
+        
+        jList1.addMouseListener(new MouseAdapter() {
+            public void mousePressed(MouseEvent e) {
+                if (SwingUtilities.isRightMouseButton(e)) {
+                    jList1.setSelectedIndex(jList1.locationToIndex(e.getPoint()));
+                    jMenuContactos.show(jList1, e.getPoint().x, e.getPoint().y);
+                }
+            }
+        });
+        
+        jList1.setCellRenderer(new ContactRenderer()); 
+        jList1.setModel(modeloLista);
+        
+        /*modeloLista = Contactos.getInstance().getModeloLista();
         if (modeloLista == null) {
             modeloLista = new DefaultListModel<>();
         }
@@ -84,7 +95,7 @@ public class TresEnRayaUI extends javax.swing.JFrame implements OnMessageListene
             modeloLista.addElement("No clients connected"); 
         }
         
-        jList1.setModel(modeloLista);
+        jList1.setModel(modeloLista);*/
         
         //btnSendMessage.addActionListener(this);
         ConexionDB.onstance().getConection();
@@ -116,6 +127,8 @@ public class TresEnRayaUI extends javax.swing.JFrame implements OnMessageListene
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
+        jMenuContactos = new javax.swing.JPopupMenu();
+        retar = new javax.swing.JMenuItem();
         jToolBar1 = new javax.swing.JToolBar();
         btnServer = new javax.swing.JButton();
         jButton1 = new javax.swing.JButton();
@@ -136,6 +149,9 @@ public class TresEnRayaUI extends javax.swing.JFrame implements OnMessageListene
         jPanel3 = new javax.swing.JPanel();
         jScrollPane1 = new javax.swing.JScrollPane();
         jList1 = new javax.swing.JList<>();
+
+        retar.setText("jMenuItem1");
+        jMenuContactos.add(retar);
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
@@ -289,11 +305,6 @@ public class TresEnRayaUI extends javax.swing.JFrame implements OnMessageListene
 
         jSplitPane1.setLeftComponent(jPanel1);
 
-        jList1.setModel(new javax.swing.AbstractListModel<String>() {
-            String[] strings = { "Item 1", "Item 2", "Item 3", "Item 4", "Item 5", " " };
-            public int getSize() { return strings.length; }
-            public String getElementAt(int i) { return strings[i]; }
-        });
         jScrollPane1.setViewportView(jList1);
 
         jSplitPane1.setRightComponent(jScrollPane1);
@@ -341,7 +352,7 @@ public class TresEnRayaUI extends javax.swing.JFrame implements OnMessageListene
                 MediadorCliente.sendMessageCliente(message+"\n");
                 textField1.setText("");
             } else {
-                MediadorCliente.sendMessageCliente(message+"\n");
+                MediadorCliente.sendMessageCliente(message);
                 textField1.setText("");
             }
         }
@@ -411,7 +422,8 @@ public class TresEnRayaUI extends javax.swing.JFrame implements OnMessageListene
     private javax.swing.JButton jButton3;
     private javax.swing.JButton jButton4;
     private javax.swing.JButton jButton5;
-    private javax.swing.JList<String> jList1;
+    private javax.swing.JList<Contacto> jList1;
+    private javax.swing.JPopupMenu jMenuContactos;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel2;
     private javax.swing.JPanel jPanel3;
@@ -420,6 +432,7 @@ public class TresEnRayaUI extends javax.swing.JFrame implements OnMessageListene
     private javax.swing.JSplitPane jSplitPane2;
     private javax.swing.JTextArea jTextArea1;
     private javax.swing.JToolBar jToolBar1;
+    private javax.swing.JMenuItem retar;
     private javax.swing.JButton sendIp;
     private java.awt.TextField textField1;
     // End of variables declaration//GEN-END:variables
@@ -519,7 +532,8 @@ public class TresEnRayaUI extends javax.swing.JFrame implements OnMessageListene
                 SwingUtilities.invokeLater(() -> {
                     JOptionPane.showMessageDialog(null, "Mensaje enviado a IP: " + ip,
                             "OK", JOptionPane.INFORMATION_MESSAGE);
-                });                
+                });   
+                this.ip = ip;
                              
             } catch (IOException e) {
                 System.err.println("I/O error: " + e.getMessage());
@@ -611,14 +625,17 @@ public class TresEnRayaUI extends javax.swing.JFrame implements OnMessageListene
                     System.out.println(sol.getIp() + " " + acep.getComando());
                     Contactos.getInstance().send(sol.getIp(), acep.getComando() + System.lineSeparator());
                                         
-                    if(modeloLista != null) {
+                    /*if(modeloLista != null) {
                         SwingUtilities.invokeLater(() -> {
                             if (modeloLista.size() == 1 && modeloLista.get(0).equals("No clients connected")) {
                                 modeloLista.remove(0);
                             }
                             modeloLista.addElement(nombre + " - " + sol.getIp());
                         });
-                    }
+                    }*/
+                    
+                    Contacto contacto= new Contacto(sol.getNombre(), sol.getIp(), false);          
+                    modeloLista.addElement(contacto);
                 } else if (n == JOptionPane.NO_OPTION) {
                     Contactos.getInstance().send(sol.getIp(), rec.getComando() + System.lineSeparator());
                 }
@@ -632,13 +649,16 @@ public class TresEnRayaUI extends javax.swing.JFrame implements OnMessageListene
                 String name = ace.getNombre();
                 System.out.println("Solicitud aceptada por " + name);
                 JOptionPane.showMessageDialog(null, name + " ha aceptado la solicitud.", "Solicitud Aceptada", JOptionPane.INFORMATION_MESSAGE);
-                SwingUtilities.invokeLater(() -> {
+                /*SwingUtilities.invokeLater(() -> {
                     if (modeloLista.size() == 1 && modeloLista.get(0).equals("No clients connected")) {
                         modeloLista.remove(0);
                     }
                     Contactos.getInstance().onNewClient(socketClientNew);
                     modeloLista.addElement(name + " - " + this.ip);
-                });
+                });*/
+                
+                Contacto contact = new Contacto(name, this.ip, false);
+                modeloLista.addElement(contact);
                 break;
             case "0004":
                 IniciarJuego inc = (IniciarJuego) c;
@@ -650,7 +670,15 @@ public class TresEnRayaUI extends javax.swing.JFrame implements OnMessageListene
                 
                 if (respuesta == JOptionPane.YES_OPTION) {
                     juegoIniciado = true; 
-                    Contactos.getInstance().send(ip, "0006" + System.lineSeparator()); 
+                    Contactos.getInstance().send(ip, "0006" + System.lineSeparator());
+                    for (int i = 0; i < modeloLista.getSize(); i++) {
+                        Contacto contacte = modeloLista.getElementAt(i);
+                        if (contacte.getIp().equals(ip)) {
+                            contacte.setStateConnect(true);
+                            modeloLista.setElementAt(contacte, i); 
+                            break;
+                        }
+                    }
                 } else {
                     Contactos.getInstance().send(ip, "0005" + System.lineSeparator()); 
                 }
