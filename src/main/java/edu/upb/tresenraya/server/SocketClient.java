@@ -7,9 +7,11 @@ package edu.upb.tresenraya.server;
 
 import edu.upb.tresenraya.comandos.AceptacionConexion;
 import edu.upb.tresenraya.comandos.AceptacionJuego;
+import edu.upb.tresenraya.comandos.CerrarConexion;
 import edu.upb.tresenraya.comandos.Comando;
 import edu.upb.tresenraya.comandos.IniciarJuego;
 import edu.upb.tresenraya.comandos.Marcar;
+import edu.upb.tresenraya.comandos.MovimientoAdicional;
 import edu.upb.tresenraya.comandos.NuevaPartida;
 import edu.upb.tresenraya.comandos.RechazoConexion;
 import edu.upb.tresenraya.comandos.RechazoJuego;
@@ -26,12 +28,14 @@ import edu.upb.tresenraya.mediador.OnMessageListener;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import lombok.Getter;
+import lombok.Setter;
 
 /**
  * @author rlaredo
  */
 
 @Getter
+@Setter
 public class SocketClient extends Thread implements OnMessageListener {
     private final Socket socket;
     private final String ip;
@@ -135,12 +139,28 @@ public class SocketClient extends Thread implements OnMessageListener {
                     } catch (Exception ex) {
                         Logger.getLogger(SocketClient.class.getName()).log(Level.SEVERE, null, ex);
                     }
+                } 
+                if (message.contains("0010")) {
+                    System.out.println("Cerrando conexión propia");
+                    closeConnection();
+                    break; 
+                } 
+                if (message.contains("0011")) {
+                    Comando c = new MovimientoAdicional();
+                    try {
+                        c.parsear(message);
+                        Mediador.sendMessage(c);
+                    } catch (Exception ex) {
+                        Logger.getLogger(SocketClient.class.getName()).log(Level.SEVERE, null, ex);
+                    }
                 } else {
                     Mediador.sendMessage(message + "\n");
                 }
             }
         } catch (IOException e) {
             e.printStackTrace();
+        } finally {
+            closeConnection();
         }
     }
 
@@ -170,6 +190,24 @@ public class SocketClient extends Thread implements OnMessageListener {
         while (true) {
             System.out.println("Escriba un mensaje: ");
             socketClient.send((br.readLine()+System.lineSeparator()).getBytes());
+        }
+    }
+   
+    public void closeConnection() {
+        try {
+            if (br != null) {
+                br.close();
+            }
+            if (dout != null) {
+                dout.close();
+            }
+            if (socket != null && !socket.isClosed()) {
+                socket.close();
+            }
+            System.out.println("Conexión cerrada con " + ip);
+        } catch (IOException e) {
+            System.err.println("Error al cerrar la conexión: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 

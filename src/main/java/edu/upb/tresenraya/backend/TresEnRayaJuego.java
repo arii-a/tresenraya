@@ -151,5 +151,11 @@ public class TresEnRayaJuego implements OnJuegoListener {
     @Override
     public void onInvalidMove() {
     }
-    
+
+    @Override
+        public void onInicioJuego() {
+            matrizJuego = new String[3][3];
+            ultimaJugada = "";
+        }
+
 }

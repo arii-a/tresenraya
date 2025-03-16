@@ -4,19 +4,22 @@
  */
 package edu.upb.tresenraya;
 
+import edu.upb.tresenraya.backend.SoundPlayer;
 import edu.upb.tresenraya.comandos.AceptacionConexion;
+import edu.upb.tresenraya.comandos.AceptacionJuego;
 import edu.upb.tresenraya.comandos.Comando;
 import edu.upb.tresenraya.comandos.Contacto;
 import edu.upb.tresenraya.comandos.Contactos;
 import edu.upb.tresenraya.comandos.IniciarJuego;
 import edu.upb.tresenraya.comandos.Marcar;
+import edu.upb.tresenraya.comandos.MovimientoAdicional;
 import edu.upb.tresenraya.comandos.RechazoConexion;
+import edu.upb.tresenraya.comandos.RechazoJuego;
 import edu.upb.tresenraya.comandos.SolicitudConexion;
 import edu.upb.tresenraya.db.ConexionDB;
+import edu.upb.tresenraya.db.ContactosDB;
 import edu.upb.tresenraya.mediador.Mediador;
 import edu.upb.tresenraya.mediador.MediadorCliente;
-import edu.upb.tresenraya.mediador.MediadorJuego;
-import edu.upb.tresenraya.mediador.OnJuegoListener;
 import edu.upb.tresenraya.mediador.OnMessageListener;
 import edu.upb.tresenraya.server.ServidorJuego;
 import edu.upb.tresenraya.server.SocketClient;
@@ -34,7 +37,6 @@ import java.awt.Font;
 import java.awt.event.MouseAdapter;
 import java.io.IOException;
 import java.net.Socket;
-import java.util.Map;
 import javax.swing.DefaultListModel;
 import javax.swing.JOptionPane;
 import javax.swing.SwingConstants;
@@ -44,15 +46,18 @@ import javax.swing.SwingUtilities;
  *
  * @author rlaredo
  */
-public class TresEnRayaUI extends javax.swing.JFrame implements OnMessageListener, ActionListener, MouseListener, OnJuegoListener {
+public class TresEnRayaUI extends javax.swing.JFrame implements OnMessageListener, ActionListener, MouseListener {
 
     private ServidorJuego servidorJuego;
-    private String jugadorActual = "";
+    private String jugador = "";
     private String posActual = "";
     String ip = "";
     SocketClient socketClientNew;
     DefaultListModel<Contacto> modeloLista = new DefaultListModel<>();
     private boolean juegoIniciado = false;
+    private Contacto contacto = null;
+    private boolean juegoHabilitado = false;
+    private boolean movimientoExtra = false;
 
     public JTextArea getjTextArea1() {
         return jTextArea1;
@@ -66,7 +71,6 @@ public class TresEnRayaUI extends javax.swing.JFrame implements OnMessageListene
         initComponents();
         Mediador.addListener(this);
         MediadorCliente.addListenerCliente(this);
-        MediadorJuego.addListenerJuego(this);
         
         jList1.addMouseListener(new MouseAdapter() {
             public void mousePressed(MouseEvent e) {
@@ -77,27 +81,13 @@ public class TresEnRayaUI extends javax.swing.JFrame implements OnMessageListene
             }
         });
         
-        jList1.setCellRenderer(new ContactRenderer()); 
+        jList1.setCellRenderer(new ContactRenderer());
+        for(ContactosDB contactoDB : ContactosDB.getContactos()) {
+            Contacto contact = new Contacto(contactoDB.getNombre(), contactoDB.getIp(), false); 
+            modeloLista.addElement(contact);
+        }
         jList1.setModel(modeloLista);
         
-        /*modeloLista = Contactos.getInstance().getModeloLista();
-        if (modeloLista == null) {
-            modeloLista = new DefaultListModel<>();
-        }
-
-        Map<String, SocketClient> contatos = Contactos.getInstance().getContatos();
-
-        if (contatos != null && !contatos.isEmpty()) {
-            for (String key : contatos.keySet()) {
-                modeloLista.addElement(key); 
-            }
-        } else {
-            modeloLista.addElement("No clients connected"); 
-        }
-        
-        jList1.setModel(modeloLista);*/
-        
-        //btnSendMessage.addActionListener(this);
         ConexionDB.onstance().getConection();
                 
         GridLayout gridLayout = new GridLayout(3, 3);
@@ -129,11 +119,14 @@ public class TresEnRayaUI extends javax.swing.JFrame implements OnMessageListene
 
         jMenuContactos = new javax.swing.JPopupMenu();
         retar = new javax.swing.JMenuItem();
+        eliminar = new javax.swing.JMenuItem();
         jToolBar1 = new javax.swing.JToolBar();
         btnServer = new javax.swing.JButton();
         jButton1 = new javax.swing.JButton();
         jButton2 = new javax.swing.JButton();
         jButton5 = new javax.swing.JButton();
+        jButton6 = new javax.swing.JButton();
+        jButton7 = new javax.swing.JButton();
         ipSender = new javax.swing.JTextField(20);
         jButton3 = new javax.swing.JButton();
         sendIp = new javax.swing.JButton();
@@ -150,8 +143,21 @@ public class TresEnRayaUI extends javax.swing.JFrame implements OnMessageListene
         jScrollPane1 = new javax.swing.JScrollPane();
         jList1 = new javax.swing.JList<>();
 
-        retar.setText("jMenuItem1");
+        retar.setText("Retar");
+        retar.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                retarActionPerformed(evt);
+            }
+        });
         jMenuContactos.add(retar);
+
+        eliminar.setText("Eliminar");
+        eliminar.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                eliminarActionPerformed(evt);
+            }
+        });
+        jMenuContactos.add(eliminar);
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
@@ -192,6 +198,24 @@ public class TresEnRayaUI extends javax.swing.JFrame implements OnMessageListene
         jButton5.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
         jButton5.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
         jToolBar1.add(jButton5);
+
+        jButton6.setBackground(new java.awt.Color(234, 234, 234));
+        jButton6.setText("Solicitar movida");
+        jButton6.setBorder(javax.swing.BorderFactory.createEtchedBorder());
+        jButton6.setFocusable(false);
+        jButton6.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        jButton6.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
+        jButton6.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton6ActionPerformed(evt);
+            }
+        });
+        jToolBar1.add(jButton6);
+
+        jButton7.setFocusable(false);
+        jButton7.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        jButton7.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
+        jToolBar1.add(jButton7);
 
         ipSender.setBackground(new java.awt.Color(234, 234, 234));
         ipSender.addActionListener(new java.awt.event.ActionListener() {
@@ -283,7 +307,7 @@ public class TresEnRayaUI extends javax.swing.JFrame implements OnMessageListene
         jPanel3.setLayout(jPanel3Layout);
         jPanel3Layout.setHorizontalGroup(
             jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 335, Short.MAX_VALUE)
+            .addGap(0, 0, Short.MAX_VALUE)
         );
         jPanel3Layout.setVerticalGroup(
             jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -336,8 +360,7 @@ public class TresEnRayaUI extends javax.swing.JFrame implements OnMessageListene
                 btnServer.setText("Servidor Iniciado");
                 jTextArea1.setEditable(false);
                 jTextArea1.append("Chat iniciado!\n");
-            } catch (Exception e) {
-                e.printStackTrace();
+            } catch (IOException e) {
             }
         }
     }//GEN-LAST:event_btnServerActionPerformed
@@ -373,10 +396,54 @@ public class TresEnRayaUI extends javax.swing.JFrame implements OnMessageListene
     }//GEN-LAST:event_sendIpActionPerformed
 
     private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
-        System.out.println("0007");
+        vaciarCuadricula();
+        MediadorCliente.sendMessageCliente("0007");
     }//GEN-LAST:event_jButton2ActionPerformed
 
-    
+    private void retarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_retarActionPerformed
+        String[] simbolos = {"X", "O"};
+        int respuesta = JOptionPane.showOptionDialog(null,
+                        "Selecciona el símbolo con el que deseas solicitar.",
+                   "Símbolo",
+                JOptionPane.DEFAULT_OPTION,
+                JOptionPane.QUESTION_MESSAGE,
+                null,
+                simbolos,
+                simbolos[0]
+        );
+               
+        if (respuesta == 0) {
+            IniciarJuego inc = new IniciarJuego(simbolos[0]);
+            MediadorCliente.sendMessageCliente(inc.getComando());
+            jugador = simbolos[0];
+        } else if (respuesta == 1) {
+            IniciarJuego inc = new IniciarJuego(simbolos[1]);
+            MediadorCliente.sendMessageCliente(inc.getComando());
+            jugador = simbolos[1];
+        }
+    }//GEN-LAST:event_retarActionPerformed
+
+    private void eliminarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_eliminarActionPerformed
+        contacto = jList1.getSelectedValue();
+        if (contacto != null) {
+            String ipContacto = contacto.getIp();
+            System.out.println(ipContacto);
+            SocketClient client = Contactos.getInstance().getContactoByIp(ipContacto);
+            if (client != null) {
+                client.closeConnection();
+                modeloLista.removeElement(contacto);
+                ContactosDB.deleteContacto(contacto.getIp());
+            } else {
+                JOptionPane.showMessageDialog(this, "No se ha podido eliminar, contacto nulo.", "Error", JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    }//GEN-LAST:event_eliminarActionPerformed
+
+    private void jButton6ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton6ActionPerformed
+        movimientoExtra = true;
+    }//GEN-LAST:event_jButton6ActionPerformed
+
+
     /**
      * @param args the command line arguments
      */
@@ -416,12 +483,15 @@ public class TresEnRayaUI extends javax.swing.JFrame implements OnMessageListene
     private javax.swing.JButton btnSendMessage;
     private javax.swing.JButton btnServer;
     private javax.swing.JScrollPane chatPrueba;
+    private javax.swing.JMenuItem eliminar;
     private javax.swing.JTextField ipSender;
     private javax.swing.JButton jButton1;
     private javax.swing.JButton jButton2;
     private javax.swing.JButton jButton3;
     private javax.swing.JButton jButton4;
     private javax.swing.JButton jButton5;
+    private javax.swing.JButton jButton6;
+    private javax.swing.JButton jButton7;
     private javax.swing.JList<Contacto> jList1;
     private javax.swing.JPopupMenu jMenuContactos;
     private javax.swing.JPanel jPanel1;
@@ -460,18 +530,10 @@ public class TresEnRayaUI extends javax.swing.JFrame implements OnMessageListene
 
     public void sendColour(String colour) {
        switch (colour) {
-        case "1":
-            jTextArea1.setBackground(Color.RED);
-            break;
-        case "2":
-            jTextArea1.setBackground(Color.BLUE);
-            break;
-        case "3":
-            jTextArea1.setBackground(Color.GREEN);
-            break;
-        default:
-            jTextArea1.setBackground(Color.WHITE);
-            break;        
+        case "1" -> jTextArea1.setBackground(Color.RED);
+        case "2" -> jTextArea1.setBackground(Color.BLUE);
+        case "3" -> jTextArea1.setBackground(Color.GREEN);
+        default -> jTextArea1.setBackground(Color.WHITE);        
        }
     }
    
@@ -485,18 +547,6 @@ public class TresEnRayaUI extends javax.swing.JFrame implements OnMessageListene
     @Override
     public void onMessageCliente(String message) {
         // TODO Auto-generated method stub
-    }
-
-    @Override
-    public void mouseClicked(MouseEvent e) {
-        JLabel source =(JLabel)e.getSource();
-        if (!source.getText().isEmpty()) return;
-        source.setText(jugadorActual);
-        
-        String pos = "" + source.getName();
-        this.posActual = pos;
-        System.out.println(this.posActual);    
-        MediadorJuego.sendMessageJuego(this.posActual + " " + this.jugadorActual);
     }
 
     @Override
@@ -526,6 +576,7 @@ public class TresEnRayaUI extends javax.swing.JFrame implements OnMessageListene
                 socketClientNew.start();        
                 
                 Contactos.getInstance().onNewClient(socketClientNew);
+                ContactosDB.addContacto(socketClientNew.getIp(), msg.split("\\|")[1]);
                 System.out.println(socketClientNew.getIp());
                 Contactos.getInstance().send(socketClientNew.getIp(), msg + System.lineSeparator());
             
@@ -538,58 +589,123 @@ public class TresEnRayaUI extends javax.swing.JFrame implements OnMessageListene
             } catch (IOException e) {
                 System.err.println("I/O error: " + e.getMessage());
                 JOptionPane.showMessageDialog(null, "Error al conectar con el cliente", "Error", JOptionPane.ERROR_MESSAGE);
-                e.printStackTrace();
             }
     }
 
-    @Override
-    public void onSendDatos(String datos) {
-        String[] partes = datos.split(" ");
-        String pos = partes[0]; 
-        String simbolo = partes[1]; 
-
-        int posX = Character.getNumericValue(pos.charAt(0)); 
-        int posY = Character.getNumericValue(pos.charAt(1)); 
-
+    public void onSendDatos(String simbolo, int posX, int posY) {
         String nombreCelda = posX + "" + posY;
-        for (Component comp : jPanel3.getComponents()) { // jPanel3 contiene los JLabels
-        if (comp instanceof JLabel) {
-            JLabel label = (JLabel) comp;
-            if (nombreCelda.equals(label.getName())) {
-                if (!label.getText().isEmpty()) {
-                    System.err.println("Error: celda ya ocupada -> " + nombreCelda);
+        for (Component comp : jPanel3.getComponents()) {
+            if (comp instanceof JLabel label) {
+                if (nombreCelda.equals(label.getName())) {
+                    if (!label.getText().isEmpty()) {
+                        System.err.println("Error: celda ya ocupada -> " + nombreCelda);
+                        return;
+                    }
+                    label.setText(simbolo);
+                    label.setFont(new Font("Arial", Font.BOLD, 60));
+                    label.setHorizontalAlignment(SwingConstants.CENTER);
+                    label.setVerticalAlignment(SwingConstants.CENTER);
+                    System.out.println("Movimiento realizado en " + nombreCelda + " con " + simbolo);
                     return;
                 }
-                label.setText(simbolo);
-                label.setFont(new Font("Arial", Font.BOLD, 60)); 
-                label.setHorizontalAlignment(SwingConstants.CENTER); 
-                label.setVerticalAlignment(SwingConstants.CENTER);
-                System.out.println("Movimiento realizado en " + nombreCelda + " con " + simbolo);
+            }
+        }
+
+        System.err.println("Error: No se encontró la celda con nombre -> " + nombreCelda);
+    }
+    
+    @Override
+    public void mouseClicked(MouseEvent e) {
+        if (juegoHabilitado) {
+            JLabel source = (JLabel) e.getSource();
+            if (!source.getText().isEmpty()) {
                 return;
+            }
+            source.setText(jugador);
+            source.setFont(new Font("Arial", Font.BOLD, 60));
+            source.setHorizontalAlignment(SwingConstants.CENTER);
+            source.setVerticalAlignment(SwingConstants.CENTER);
+            System.out.println("Movimiento realizado en " + source + " con " + jugador);
+
+            String pos = "" + source.getName();
+            this.posActual = pos;
+            System.out.println(this.posActual);
+            //MediadorJuego.sendMessageJuego(this.posActual + " " + this.jugador);
+            Marcar marcar = new Marcar(jugador,
+                    Integer.parseInt(posActual.split("")[0]),
+                    Integer.parseInt(posActual.split("")[1]));
+            MovimientoAdicional move = new MovimientoAdicional(jugador,
+                    Integer.parseInt(posActual.split("")[0]),
+                    Integer.parseInt(posActual.split("")[1]));
+            if (!movimientoExtra) {
+                Mediador.sendMessage(marcar.getComando());
+                MediadorCliente.sendMessageCliente(marcar.getComando() + "\n");
+            } else {
+                Mediador.sendMessage(move.getComando());
+                MediadorCliente.sendMessageCliente(move.getComando() + "\n");
+            }
+        }
+       
+        if (verificarEmpate()) {
+            JOptionPane.showMessageDialog(null, "Ha habido un empate",
+                    "Partida finalizada", JOptionPane.INFORMATION_MESSAGE);
+            juegoHabilitado = false;
+        } else if (verificarGanador()) {
+            SoundPlayer.playSound("WIN.wav");
+            JOptionPane.showMessageDialog(null, "El jugador " + jugador + " ha ganado :D",
+                    "Partida finalizada", JOptionPane.INFORMATION_MESSAGE);
+            juegoHabilitado = false;
+        } else {
+            if (movimientoExtra) {
+                juegoHabilitado = true;
+                movimientoExtra = false;
+            } else {
+                juegoHabilitado = false;
             }
         }
     }
 
-        System.err.println("Error: No se encontró la celda con nombre -> " + nombreCelda);
+    private boolean verificarGanador() {
+    String[][] matriz = new String[3][3];
+    for (Component c : jPanel3.getComponents()) {
+            if (c instanceof JLabel label) {
+                String pos = label.getName();
+                matriz[Integer.parseInt(pos.substring(0, 1))][Integer.parseInt(pos.substring(1, 2))] = label.getText();
+            }
+        }
+
+        for (int i = 0; i < 3; i++) {
+            //filas
+            if (matriz[i][0] != null && !matriz[i][0].isEmpty()
+                    && matriz[i][0].equals(matriz[i][1]) && matriz[i][1].equals(matriz[i][2])) {
+                return true;
+            }
+            //columnas
+            if (matriz[0][i] != null && !matriz[0][i].isEmpty()
+                    && matriz[0][i].equals(matriz[1][i]) && matriz[1][i].equals(matriz[2][i])) {
+                return true;
+            }
+        }
+        //diagonales
+        if (matriz[0][0] != null && !matriz[0][0].isEmpty()
+                && matriz[0][0].equals(matriz[1][1]) && matriz[1][1].equals(matriz[2][2])) {
+            return true;
+        }
+        return matriz[0][2] != null && !matriz[0][2].isEmpty()
+                && matriz[0][2].equals(matriz[1][1]) && matriz[1][1].equals(matriz[2][0]);
     }
 
-    @Override
-    public void onGanador(String ganador) {
-        JOptionPane.showMessageDialog(null, "El jugador " + ganador + " ha ganador :D",
-                "Partida finalizada", JOptionPane.INFORMATION_MESSAGE);
-        
-            return;
+    private boolean verificarEmpate() {
+        for (Component c : jPanel3.getComponents()) {
+            if (c instanceof JLabel jLabel) {
+                if (jLabel.getText().isEmpty()) {
+                    return false;
+                }
+            }
+        }
+        return true;
     }
 
-    @Override
-    public void onEmpate() {
-        JOptionPane.showMessageDialog(null, "Ha habido un empate",
-                "Partida finalizada", JOptionPane.INFORMATION_MESSAGE);
-            
-        return;
-    }
-
-    @Override
     public void onInvalidMove() {
             JOptionPane.showMessageDialog(null, "Este jugador ya jugó su turno!!.",
                 "Movimiento no válido", JOptionPane.WARNING_MESSAGE);
@@ -598,8 +714,8 @@ public class TresEnRayaUI extends javax.swing.JFrame implements OnMessageListene
     
     public void vaciarCuadricula() {
         for (Component c : jPanel3.getComponents()) {
-            if (c instanceof JLabel) {
-                ((JLabel) c).setText("");
+            if (c instanceof JLabel jLabel) {
+                jLabel.setText("");
             }
         }
         jPanel3.revalidate();
@@ -610,7 +726,7 @@ public class TresEnRayaUI extends javax.swing.JFrame implements OnMessageListene
     @Override
     public void onMessage(Comando c) {
         switch (c.getCodigoComando()) {
-            case "0001":
+            case "0001" -> {
                 SolicitudConexion sol = (SolicitudConexion) c;
                 String nombre = sol.getNombre();
                 AceptacionConexion acep = new AceptacionConexion(nombre);
@@ -623,44 +739,31 @@ public class TresEnRayaUI extends javax.swing.JFrame implements OnMessageListene
 
                 if (n == JOptionPane.YES_OPTION) {
                     System.out.println(sol.getIp() + " " + acep.getComando());
+                    MediadorCliente.sendMessageCliente(acep.getComando());
                     Contactos.getInstance().send(sol.getIp(), acep.getComando() + System.lineSeparator());
-                                        
-                    /*if(modeloLista != null) {
-                        SwingUtilities.invokeLater(() -> {
-                            if (modeloLista.size() == 1 && modeloLista.get(0).equals("No clients connected")) {
-                                modeloLista.remove(0);
-                            }
-                            modeloLista.addElement(nombre + " - " + sol.getIp());
-                        });
-                    }*/
                     
-                    Contacto contacto= new Contacto(sol.getNombre(), sol.getIp(), false);          
-                    modeloLista.addElement(contacto);
+                    Contacto contactu = new Contacto(sol.getNombre(), sol.getIp(), false);          
+                    modeloLista.addElement(contactu);
+                    
                 } else if (n == JOptionPane.NO_OPTION) {
+                    MediadorCliente.sendMessageCliente(rec.getComando());
                     Contactos.getInstance().send(sol.getIp(), rec.getComando() + System.lineSeparator());
                 }
-                break;
-            case "0002":
+            }
+            case "0002" -> {
                 System.out.println("Solicitud rechazada");
                 JOptionPane.showMessageDialog(null, "Solicitud rechazada.", "NO", JOptionPane.INFORMATION_MESSAGE);
-                break;
-            case "0003":
+            }
+            case "0003" -> {
                 AceptacionConexion ace = (AceptacionConexion) c;
                 String name = ace.getNombre();
-                System.out.println("Solicitud aceptada por " + name);
+                System.out.println("0003|" + name);
                 JOptionPane.showMessageDialog(null, name + " ha aceptado la solicitud.", "Solicitud Aceptada", JOptionPane.INFORMATION_MESSAGE);
-                /*SwingUtilities.invokeLater(() -> {
-                    if (modeloLista.size() == 1 && modeloLista.get(0).equals("No clients connected")) {
-                        modeloLista.remove(0);
-                    }
-                    Contactos.getInstance().onNewClient(socketClientNew);
-                    modeloLista.addElement(name + " - " + this.ip);
-                });*/
                 
                 Contacto contact = new Contacto(name, this.ip, false);
                 modeloLista.addElement(contact);
-                break;
-            case "0004":
+            }
+            case "0004" -> {
                 IniciarJuego inc = (IniciarJuego) c;
                 String simb = inc.getSimboloJuego();
                 int respuesta = JOptionPane.showConfirmDialog(null,
@@ -669,8 +772,17 @@ public class TresEnRayaUI extends javax.swing.JFrame implements OnMessageListene
                         JOptionPane.YES_NO_OPTION);
                 
                 if (respuesta == JOptionPane.YES_OPTION) {
+                    AceptacionJuego acepj = new AceptacionJuego();
+                    if(simb.equals("X")) {
+                        jugador = "O";
+                    } else if (simb.equals("O")) {
+                        jugador = "X";
+                    }
+                    
                     juegoIniciado = true; 
+                    movimientoExtra = false;
                     Contactos.getInstance().send(ip, "0006" + System.lineSeparator());
+                    MediadorCliente.sendMessageCliente(acepj.getComando());
                     for (int i = 0; i < modeloLista.getSize(); i++) {
                         Contacto contacte = modeloLista.getElementAt(i);
                         if (contacte.getIp().equals(ip)) {
@@ -680,21 +792,32 @@ public class TresEnRayaUI extends javax.swing.JFrame implements OnMessageListene
                         }
                     }
                 } else {
+                    RechazoJuego rechj = new RechazoJuego();
                     Contactos.getInstance().send(ip, "0005" + System.lineSeparator()); 
+                    MediadorCliente.sendMessageCliente(rechj.getComando());
                 }
-                break;
-            case "0005":
-                JOptionPane.showMessageDialog(null, "Juegador rechazó partida", "Partida Rechazada", JOptionPane.INFORMATION_MESSAGE);
-                break;
-            case "0006":
+            }
+            case "0005" -> JOptionPane.showMessageDialog(null, "Juegador rechazó partida", "Partida Rechazada", JOptionPane.INFORMATION_MESSAGE);
+            case "0006" -> {
                 juegoIniciado = true;
+                juegoHabilitado = true;
+                movimientoExtra = false;
                 JOptionPane.showMessageDialog(null, "Juegador aceptó la partida", "Partida Aceptada", JOptionPane.INFORMATION_MESSAGE);
-                break;
-            case "0007":
+                for(int i = 0; i < modeloLista.getSize(); i++) {
+                    Contacto contactis = modeloLista.getElementAt(i);
+                    if(contactis.getIp().equals(ip)) {
+                        contactis.setStateConnect(true);
+                        modeloLista.setElementAt(contactis, i);
+                        break;
+                    }
+                }
+            }
+            case "0007" -> {
                 vaciarCuadricula();
+                juegoHabilitado = true;
                 JOptionPane.showMessageDialog(null, "Juegador inició nueva partida", "Partida Nueva", JOptionPane.INFORMATION_MESSAGE);
-                break;
-            case "0008":
+            }
+            case "0008" -> {
                 if (!juegoIniciado) { 
                     System.err.println("⚠ No puedes jugar sin haber aceptado una partida.");
                     JOptionPane.showMessageDialog(null, "Debes aceptar una partida antes de jugar.", "Error", JOptionPane.WARNING_MESSAGE);
@@ -705,11 +828,25 @@ public class TresEnRayaUI extends javax.swing.JFrame implements OnMessageListene
                 String simbol = marca.getSimboloJuego();
                 int posX = marca.getPosX();
                 int posY = marca.getPosY();
-                MediadorJuego.sendMessageJuego(posX + "" + posY + " " + simbol);
+                onSendDatos(simbol, posX, posY);
                 System.out.println(simbol + " en casilla " + posX + "" + posY);
+                juegoHabilitado = true;
             }
+            case "0011" -> {
+                if (!juegoIniciado) { 
+                    System.err.println("⚠ No puedes jugar sin haber aceptado una partida.");
+                    JOptionPane.showMessageDialog(null, "Debes aceptar una partida antes de jugar.", "Error", JOptionPane.WARNING_MESSAGE);
+                    return; 
+                }
+
+                JOptionPane.showMessageDialog(null, "Se ha solicitado doble movimiento", "Movimientos adicionales", JOptionPane.INFORMATION_MESSAGE);
+                MovimientoAdicional move = (MovimientoAdicional) c;
+                String simbolo = move.getSimboloJuego();
+                int x = move.getPosX();
+                int y = move.getPosY();
+                System.out.println(simbolo + " en casilla " + x + "" + y);
+                juegoHabilitado = false;
+            }
+        }
     }
-
-    
-
 }

@@ -25,6 +25,12 @@ public class MediadorJuego {
     public static void addListenerJuego(OnJuegoListener juegoListener){
         lister.add(juegoListener);
     }
+    
+    public static void inicioJuego() {
+        for (OnJuegoListener onJuegoListener: lister) {
+            onJuegoListener.onInicioJuego();
+        }
+    }
 
     public static void sendMessageJuego(String msg) {
         for (OnJuegoListener onJuegoListener: lister) {

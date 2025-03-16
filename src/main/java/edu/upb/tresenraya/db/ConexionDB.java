@@ -14,7 +14,7 @@ import java.sql.SQLException;
  * @author Ariana
  */
 public class ConexionDB {
-    private String url = "jdbc:sqlite:C:\\Users\\Ariana\\Documents\\upb\\quino semestre\\primer modulo\\pratrones de diseño\\tres_en_raya_DB.db";
+    private String url = "jdbc:sqlite:C:\\Users\\Ariana\\tres_en_raya_DB";
     private String user = "";
     private String pass = "";
     private int port = 0;

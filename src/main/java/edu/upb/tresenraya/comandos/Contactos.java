@@ -4,6 +4,8 @@
  */
 package edu.upb.tresenraya.comandos;
 
+import edu.upb.tresenraya.db.ConexionDB;
+import edu.upb.tresenraya.db.ContactosDB;
 import edu.upb.tresenraya.server.SocketClient;
 import java.util.HashMap;
 import java.util.Map;
@@ -20,10 +22,15 @@ import lombok.Setter;
 @Setter
 public class Contactos implements SocketListener {
     
-    private final Map<String, SocketClient> contatos = new HashMap<>();
+    private static final Map<String, SocketClient> contatos = new HashMap<>();
     private static Contactos instance = new Contactos();
     private boolean stateConnect = false;
     private DefaultListModel<String> modeloLista;
+    
+    public static void main(String[] args) {
+        System.out.println("Imprimiendo: ");
+        contatos.forEach((i, s) -> System.out.println(i));
+    }
     
     private Contactos() {
         MediadorContactos.geInstance().addListener(this);
@@ -40,11 +47,19 @@ public class Contactos implements SocketListener {
         }     
     }
     
-    public  void send(String ip, String msg){
+    public void send(String ip, String msg){
         SocketClient sc = this.contatos.get(ip);
         if(sc != null){
             sc.send(msg.getBytes());
         }
+    }
+    
+    public SocketClient getContactoByIp(String ip) {
+        return this.contatos.get(ip);
+    }
+    
+    public void deleteClient(SocketClient client) {
+        contatos.remove(client.getIp());
     }
     
 }
